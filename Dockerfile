@@ -9,7 +9,6 @@ ENV AIRFLOW__CORE__FERNET_KEY=AIRFLOW__CORE__FERNET_KEY
 
 # Crea los directorios necesarios dentro del contenedor
 RUN mkdir -p /opt/airflow/dags \
-             /opt/airflow/logs \
              /opt/airflow/img \
              /opt/airflow/tmp \
              /opt/airflow/plugins/operators \
