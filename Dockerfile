@@ -1,42 +1,43 @@
-# Usa la imagen oficial de Airflow (ajusta la versión según tus necesidades)
 FROM apache/airflow:2.10.2
 
-# Configura algunas variables de entorno para Airflow (ajusta según tu configuración)
+# Configura el directorio de trabajo
+WORKDIR /opt/airflow
+
+# Configura variables de entorno necesarias
 ENV AIRFLOW__CORE__EXECUTOR=LocalExecutor
 ENV AIRFLOW__CORE__LOAD_EXAMPLES=False
-# (Opcional) Genera o define una clave Fernet para encriptar conexiones/variables
 ENV AIRFLOW__CORE__FERNET_KEY=AIRFLOW__CORE__FERNET_KEY
 
-# Crea los directorios necesarios dentro del contenedor
+# Instalar dependencias del sistema (necesarias para algunas bibliotecas de Python)
+USER root
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Crear directorios necesarios dentro del contenedor
 RUN mkdir -p /opt/airflow/dags \
              /opt/airflow/img \
              /opt/airflow/tmp \
-             /opt/airflow/plugins/operators \
+             /opt/airflow/plugins/operators
 
-# (Opcional) Si tienes dependencias adicionales, cópialas e instálalas
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copiar archivos necesarios
+COPY requirements.txt /opt/airflow/requirements.txt
+RUN pip install --no-cache-dir -r /opt/airflow/requirements.txt
 
-# Copia el contenido de cada carpeta de tu repositorio al directorio correspondiente en la imagen
 COPY dags/ /opt/airflow/dags/
 COPY img/ /opt/airflow/img/
-# Aunque la carpeta logs normalmente se genere en tiempo de ejecución, se puede copiar una estructura base
 COPY tmp/ /opt/airflow/tmp/
-COPY plugins/operators/ /opt/airflow/plugins/operators
+COPY plugins/operators/ /opt/airflow/plugins/operators/
 
-# Establece el directorio de trabajo
-WORKDIR /opt/airflow
+# Copiar configuración de supervisord para manejar múltiples procesos
+COPY supervisord.conf /opt/airflow/supervisord.conf
 
-# Expone el puerto para el Airflow Webserver (ajusta si es necesario)
+# Exponer puerto para la interfaz web de Airflow
 EXPOSE 8080
 
-# Configura el entrypoint y el comando por defecto.
-# La imagen oficial ya trae el script de entrada "docker-entrypoint.sh"
-ENTRYPOINT ["docker-entrypoint.sh"]
+# Establecer usuario por defecto
+USER airflow
 
-# Define el comando por defecto. Puedes iniciar el scheduler, el webserver o ambos a través de supervisord.
-# Ejemplo para iniciar el scheduler:
-CMD ["airflow", "scheduler"]
-
-# Si prefieres iniciar el webserver, podrías cambiar CMD a:
-CMD ["airflow", "webserver"]
+# Iniciar supervisord para ejecutar el scheduler, webserver y otros servicios
+CMD ["supervisord", "-c", "/opt/airflow/supervisord.conf"]
