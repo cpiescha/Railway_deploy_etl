@@ -5,7 +5,7 @@ FROM apache/airflow:2.10.2
 ENV AIRFLOW__CORE__EXECUTOR=LocalExecutor
 ENV AIRFLOW__CORE__LOAD_EXAMPLES=False
 # (Opcional) Genera o define una clave Fernet para encriptar conexiones/variables
-ENV AIRFLOW__CORE__FERNET_KEY=TU_FERNET_KEY_AQUI
+ENV AIRFLOW__CORE__FERNET_KEY=AIRFLOW__CORE__FERNET_KEY
 
 # Crea los directorios necesarios dentro del contenedor
 RUN mkdir -p /opt/airflow/dags \
@@ -22,7 +22,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY dags/ /opt/airflow/dags/
 COPY img/ /opt/airflow/img/
 # Aunque la carpeta logs normalmente se genere en tiempo de ejecución, se puede copiar una estructura base
-COPY logs/ /opt/airflow/logs/
 COPY tmp/ /opt/airflow/tmp/
 COPY plugins/operators/ /opt/airflow/plugins/operators
 
