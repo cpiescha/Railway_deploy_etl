@@ -1,18 +1,17 @@
 FROM apache/airflow:2.10.2
 
-# Cambia a root para crear los directorios
+# Cambia a root para instalar dependencias y crear directorios
 USER root
 
-# Crea los directorios con permisos adecuados
-RUN apt-get update && apt-get install -y supervisor \
-    && mkdir -p /opt/airflow/dags /opt/airflow/tmp /opt/airflow/plugins/operators \
+# Instala supervisor
+RUN apt-get update && apt-get install -y supervisor
+
+# Crea directorios necesarios y ajusta permisos
+RUN mkdir -p /opt/airflow/dags /opt/airflow/tmp /opt/airflow/plugins/operators \
     && mkdir -p /var/log/supervisor \
     && chown -R 50000:0 /opt/airflow /var/log/supervisor
 
-# Cambia de vuelta al usuario airflow
-USER 50000
-
-# Copia los archivos necesarios
+# Copia archivos necesarios
 COPY requirements.txt /opt/airflow/requirements.txt
 RUN pip install --no-cache-dir -r /opt/airflow/requirements.txt
 
@@ -21,11 +20,14 @@ COPY tmp/ /opt/airflow/tmp/
 COPY plugins/operators/ /opt/airflow/plugins/operators
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Establece el directorio de trabajo
-WORKDIR /opt/airflow
+# Anula el entrypoint de la imagen oficial para que no intente anteponer "airflow"
+ENTRYPOINT []
 
-# Expone el puerto del webserver
+# Usa el usuario correcto
+USER 50000
+
+WORKDIR /opt/airflow
 EXPOSE 8080
 
-# Ejecuta supervisord
+# Ejecuta supervisord directamente
 CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
