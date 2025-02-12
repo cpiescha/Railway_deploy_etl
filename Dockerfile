@@ -33,7 +33,7 @@ COPY --chown=airflow:airflow plugins/operators/ /opt/airflow/plugins/operators/
 COPY --chown=airflow:airflow supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # (Opcional) Si deseas que se ejecute supervisord en vez de un comando de Airflow directo, anula el entrypoint de la imagen oficial:
-# ENTRYPOINT []
+ENTRYPOINT []
 
 # Mantén el usuario airflow (en este caso, el UID 50000)
 USER 50000
