@@ -6,10 +6,10 @@ USER root
 # Crea los directorios con permisos adecuados
 RUN mkdir -p /opt/airflow/dags /opt/airflow/tmp /opt/airflow/plugins/operators \
     && mkdir -p /var/log/supervisor \
-    && chown -R airflow:airflow /opt/airflow /var/log/supervisor
+    && chown -R 50000:0 /opt/airflow /var/log/supervisor
 
 # Cambia de vuelta al usuario airflow
-USER airflow
+USER 50000
 
 # Copia los archivos necesarios
 COPY requirements.txt /opt/airflow/requirements.txt
