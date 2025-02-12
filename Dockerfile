@@ -4,7 +4,8 @@ FROM apache/airflow:2.10.2
 USER root
 
 # Crea los directorios con permisos adecuados
-RUN mkdir -p /opt/airflow/dags /opt/airflow/tmp /opt/airflow/plugins/operators \
+RUN apt-get update && apt-get install -y supervisor \
+    && mkdir -p /opt/airflow/dags /opt/airflow/tmp /opt/airflow/plugins/operators \
     && mkdir -p /var/log/supervisor \
     && chown -R 50000:0 /opt/airflow /var/log/supervisor
 
