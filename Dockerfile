@@ -1,14 +1,10 @@
+# Usar la imagen oficial de Apache Airflow
 FROM apache/airflow:2.10.2
 
 # Configurar el directorio de trabajo
 WORKDIR /opt/airflow
 
-# Configurar variables de entorno
-ENV AIRFLOW__CORE__EXECUTOR=LocalExecutor
-ENV AIRFLOW__CORE__LOAD_EXAMPLES=False
-ENV AIRFLOW__CORE__FERNET_KEY=AIRFLOW__CORE__FERNET_KEY
-
-# Crear directorios
+# Crear directorios necesarios
 RUN mkdir -p /opt/airflow/dags \
              /opt/airflow/img \
              /opt/airflow/tmp \
@@ -33,5 +29,5 @@ COPY --chown=airflow:airflow supervisord.conf /opt/airflow/supervisord.conf
 # Exponer puerto webserver
 EXPOSE 8080
 
-# Usar supervisord para ejecutar scheduler y webserver
-CMD ["supervisord", "-c", "/opt/airflow/supervisord.conf"]
+# Usar supervisord para ejecutar scheduler, webserver y worker
+CMD ["supervisord", "-n", "-c", "/opt/airflow/supervisord.conf"]
