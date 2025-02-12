@@ -1,33 +1,26 @@
-# Usar la imagen oficial de Apache Airflow
 FROM apache/airflow:2.10.2
 
-# Configurar el directorio de trabajo
-WORKDIR /opt/airflow
-
-# Crear directorios necesarios
+# Crea los directorios necesarios
 RUN mkdir -p /opt/airflow/dags \
-             /opt/airflow/img \
              /opt/airflow/tmp \
-             /opt/airflow/plugins/operators
+             /opt/airflow/plugins/operators \
+             /var/log/supervisor
 
-# Cambiar a usuario airflow antes de instalar dependencias
-USER airflow
-
-# Copiar e instalar dependencias
-COPY --chown=airflow:airflow requirements.txt /opt/airflow/requirements.txt
+# Instala dependencias
+COPY requirements.txt /opt/airflow/requirements.txt
 RUN pip install --no-cache-dir -r /opt/airflow/requirements.txt
 
-# Copiar código fuente
-COPY --chown=airflow:airflow dags/ /opt/airflow/dags/
-COPY --chown=airflow:airflow img/ /opt/airflow/img/
-COPY --chown=airflow:airflow tmp/ /opt/airflow/tmp/
-COPY --chown=airflow:airflow plugins/operators/ /opt/airflow/plugins/operators/
+# Copia los archivos necesarios
+COPY dags/ /opt/airflow/dags/
+COPY tmp/ /opt/airflow/tmp/
+COPY plugins/operators/ /opt/airflow/plugins/operators
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Copiar configuración de supervisord
-COPY --chown=airflow:airflow supervisord.conf /opt/airflow/supervisord.conf
+# Establece el directorio de trabajo
+WORKDIR /opt/airflow
 
-# Exponer puerto webserver
+# Expone el puerto del webserver
 EXPOSE 8080
 
-# Usar supervisord para ejecutar scheduler, webserver y worker
-CMD ["supervisord", "-n", "-c", "/opt/airflow/supervisord.conf"]
+# Usa supervisord para manejar los procesos
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
