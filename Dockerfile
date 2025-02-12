@@ -1,10 +1,7 @@
 FROM apache/airflow:2.10.2
 
 # Crea los directorios necesarios
-RUN mkdir -p /opt/airflow/dags \
-             /opt/airflow/tmp \
-             /opt/airflow/plugins/operators \
-             /var/log/supervisor
+RUN mkdir -p /opt/airflow/dags /opt/airflow/tmp /opt/airflow/plugins/operators /var/log/supervisor
 
 # Instala dependencias
 COPY requirements.txt /opt/airflow/requirements.txt
