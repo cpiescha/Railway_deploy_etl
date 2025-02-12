@@ -1,33 +1,49 @@
 FROM apache/airflow:2.10.2
 
-# Cambia a root para instalar dependencias y crear directorios
+# Cambia a root para realizar tareas de instalación y creación de directorios
 USER root
 
-# Instala supervisor
-RUN apt-get update && apt-get install -y supervisor
+# (Opcional) Instala paquetes del sistema si es necesario
+RUN apt-get update && apt-get install -y supervisor \
+    && rm -rf /var/lib/apt/lists/*
 
-# Crea directorios necesarios y ajusta permisos
+# Crea los directorios necesarios y asegúrate de que tengan los permisos correctos
 RUN mkdir -p /opt/airflow/dags /opt/airflow/tmp /opt/airflow/plugins/operators \
     && mkdir -p /var/log/supervisor \
     && chown -R 50000:0 /opt/airflow /var/log/supervisor
 
-# Copia archivos necesarios
-COPY requirements.txt /opt/airflow/requirements.txt
+# Establece el directorio de trabajo
+WORKDIR /opt/airflow
+
+# Copia el archivo requirements.txt y cambia su propiedad al usuario airflow
+COPY --chown=airflow:airflow requirements.txt /opt/airflow/requirements.txt
+
+# Cambia al usuario airflow para instalar las dependencias con pip
+USER airflow
+
+# Ejecuta pip install como el usuario airflow
 RUN pip install --no-cache-dir -r /opt/airflow/requirements.txt
 
-COPY dags/ /opt/airflow/dags/
-COPY tmp/ /opt/airflow/tmp/
-COPY plugins/operators/ /opt/airflow/plugins/operators
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Copia el resto de los archivos del proyecto con la propiedad correcta
+COPY --chown=airflow:airflow dags/ /opt/airflow/dags/
+COPY --chown=airflow:airflow tmp/ /opt/airflow/tmp/
+COPY --chown=airflow:airflow plugins/operators/ /opt/airflow/plugins/operators/
 
-# Anula el entrypoint de la imagen oficial para que no intente anteponer "airflow"
-ENTRYPOINT []
+# Copia el archivo de configuración de supervisord (si usas supervisord para orquestar múltiples servicios)
+COPY --chown=airflow:airflow supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Usa el usuario correcto
+# (Opcional) Si deseas que se ejecute supervisord en vez de un comando de Airflow directo, anula el entrypoint de la imagen oficial:
+# ENTRYPOINT []
+
+# Mantén el usuario airflow (en este caso, el UID 50000)
 USER 50000
 
-WORKDIR /opt/airflow
+# Expone el puerto del webserver
 EXPOSE 8080
 
-# Ejecuta supervisord directamente
+# Define el comando a ejecutar al iniciar el contenedor.
+# Si deseas ejecutar directamente un comando de Airflow, puedes usar, por ejemplo:
+# CMD ["airflow", "webserver"]
+
+# Si prefieres usar supervisord para manejar múltiples procesos, asegúrate de haber anulado el entrypoint y usa:
 CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
